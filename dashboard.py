@@ -284,6 +284,7 @@ pagina_principal = st.sidebar.radio(
         "📊 Mercado & Desempenho",
         "📈 Regressões",
         "💰 Fundamentos & Valuation",
+        "🔮 Simulador de Cenários",
         "🎯 Decisão Dez/2027",
         "🤖 SUZI"
     ],
@@ -758,9 +759,68 @@ if pagina_principal == "🎯 Decisão Dez/2027":
             st.markdown(f"• {em}")
 
     st.markdown("---")
-    st.subheader("🎓 Parecer Conclusivo da SUZI e do SUZ Quant AI")
-    dossie_final = gerar_dossie_dezembro_2027(m_ret, d_ret, tabela_resumo)
-    st.success(dossie_final["parecer_sintese"])
+    st.header("🎓 Diagnóstico Integrado — Dezembro de 2027")
+
+    dossie_final = gerar_dossie_dezembro_2027(
+        m_ret,
+        d_ret,
+        tabela_resumo
+    )
+
+    st.markdown(
+        """
+        O diagnóstico abaixo consolida as evidências disponíveis no SUZ Quant AI.
+        A interpretação não deve depender de um único indicador estatístico,
+        mas da convergência entre mercado, risco, regressões, fundamentos,
+        valuation, eventos e cenários.
+        """
+    )
+
+    st.subheader("📌 Diagnóstico das Evidências Atuais")
+    st.info(dossie_final["parecer_sintese"] + "\n\n**A resposta objetiva consolidada está no bloco Diagnóstico Final Integrado abaixo.**")
+
+    st.markdown("### 🔎 Como interpretar este resultado")
+
+    col_diag1, col_diag2 = st.columns(2)
+
+    with col_diag1:
+        st.markdown(
+            """
+            **📈 Evidências a serem consideradas**
+
+            - Desempenho histórico do ADR SUZ
+            - Retorno e volatilidade
+            - Beta, Sharpe e Treynor
+            - Fundamentos da Suzano
+            - Comparação Suzano × Klabin
+            - Valuation por múltiplos
+            """
+        )
+
+    with col_diag2:
+        st.markdown(
+            """
+            **⚠️ Riscos e fatores de mudança**
+
+            - Preço internacional da celulose
+            - Comportamento do USD/BRL
+            - Juros americanos
+            - Endividamento da companhia
+            - Condições do mercado acionário
+            - Eventos relevantes até dezembro/2027
+            """
+        )
+
+    st.warning(
+        "⚠️ O diagnóstico representa a leitura integrada das evidências disponíveis "
+        "no período analisado. Mudanças nas premissas econômicas, operacionais ou "
+        "de mercado podem alterar a conclusão para dezembro de 2027."
+    )
+
+    st.caption(
+        "SUZ Quant AI • Diagnóstico acadêmico para a disciplina de "
+        "Mercado Financeiro e de Capitais — PUC-SP"
+    )
 
 # -----------------------------------------------------------------------------
 # ABA 11: 👥 NOSSA REGRESSÃO — MODELO DESENVOLVIDO PELO GRUPO
@@ -1775,6 +1835,99 @@ if pagina_principal == "💰 Fundamentos & Valuation":
     )
 
 # =============================================================================
+# PÁGINA: SIMULADOR DE CENÁRIOS — DEZ/2027
+# =============================================================================
+if pagina_principal == "🔮 Simulador de Cenários":
+    st.markdown("---")
+    st.header("🔮 Simulador de Cenários — Dezembro de 2027")
+    st.write(
+        "Monte um cenário para testar como mudanças nas principais premissas alteram a leitura integrada do SUZ Quant AI. "
+        "O valor indicativo abaixo é uma simulação de valuation, não uma previsão garantida de cotação."
+    )
+
+    # Referências observadas no projeto
+    adr_ref = 9.34
+    vm_ebitda_ref = 2.89
+    usdbrl_ref = 5.70
+    us10y_ref = 5.184
+
+    c1, c2 = st.columns(2)
+    with c1:
+        usdbrl_cen = st.slider("USD/BRL no cenário", 4.00, 7.50, 5.70, 0.05)
+        celulose_cen = st.slider("Variação do preço da celulose", -30, 30, 0, 1, format="%d%%")
+        ebitda_cen = st.slider("Variação do EBITDA da Suzano", -30, 30, 0, 1, format="%d%%")
+    with c2:
+        us10y_cen = st.slider("US10Y no cenário (%)", 2.00, 8.00, 5.18, 0.05)
+        multiplo_cen = st.slider("VM/EBITDA considerado", 1.50, 5.50, 2.89, 0.05)
+        mercado_cen = st.selectbox("Ambiente de mercado", ["Neutro", "Favorável", "Adverso"])
+
+    # Valuation indicativo: EBITDA e múltiplo são os fatores diretamente usados para a estimativa numérica.
+    # Câmbio, celulose, juros e mercado entram como pressões qualitativas para não inventar elasticidades.
+    valor_indicativo = adr_ref * (1 + ebitda_cen / 100) * (multiplo_cen / vm_ebitda_ref)
+    potencial_indicativo = valor_indicativo / adr_ref - 1
+
+    pressoes = []
+    if usdbrl_cen >= usdbrl_ref + 0.30:
+        pressoes.append(("USD/BRL", "favorável", "real mais depreciado no cenário"))
+    elif usdbrl_cen <= usdbrl_ref - 0.30:
+        pressoes.append(("USD/BRL", "desfavorável", "real mais apreciado no cenário"))
+    else:
+        pressoes.append(("USD/BRL", "neutro", "próximo da referência do projeto"))
+
+    if celulose_cen >= 5:
+        pressoes.append(("Celulose", "favorável", f"alta de {celulose_cen}%"))
+    elif celulose_cen <= -5:
+        pressoes.append(("Celulose", "desfavorável", f"queda de {abs(celulose_cen)}%"))
+    else:
+        pressoes.append(("Celulose", "neutro", f"variação de {celulose_cen}%"))
+
+    if us10y_cen <= us10y_ref - 0.50:
+        pressoes.append(("US10Y", "favorável", "juros longos menores que a referência"))
+    elif us10y_cen >= us10y_ref + 0.50:
+        pressoes.append(("US10Y", "desfavorável", "juros longos maiores que a referência"))
+    else:
+        pressoes.append(("US10Y", "neutro", "próximo da referência"))
+
+    if mercado_cen == "Favorável":
+        pressoes.append(("Mercado", "favorável", "ambiente selecionado como favorável"))
+    elif mercado_cen == "Adverso":
+        pressoes.append(("Mercado", "desfavorável", "ambiente selecionado como adverso"))
+    else:
+        pressoes.append(("Mercado", "neutro", "ambiente selecionado como neutro"))
+
+    fav = sum(1 for _, p, _ in pressoes if p == "favorável")
+    desf = sum(1 for _, p, _ in pressoes if p == "desfavorável")
+
+    r1, r2, r3 = st.columns(3)
+    r1.metric("ADR de referência", f"US$ {adr_ref:.2f}")
+    r2.metric("Valor indicativo do cenário", f"US$ {valor_indicativo:.2f}")
+    r3.metric("Potencial indicativo", f"{potencial_indicativo:.1%}")
+
+    st.caption(
+        "O valor indicativo usa somente EBITDA e VM/EBITDA na conta numérica. USD/BRL, celulose, US10Y e ambiente de mercado "
+        "são apresentados como pressões de cenário, pois o projeto não estabelece elasticidades causais suficientes para convertê-los diretamente em preço."
+    )
+
+    st.subheader("🧭 Pressões do cenário selecionado")
+    df_press = pd.DataFrame(pressoes, columns=["Fator", "Leitura", "Justificativa"])
+    st.dataframe(df_press, use_container_width=True, hide_index=True)
+
+    if potencial_indicativo >= 0.15 and fav > desf:
+        leitura_cenario = "O cenário personalizado reforça a tese acadêmica favorável ao ADR, condicionada à confirmação das premissas selecionadas."
+    elif potencial_indicativo <= -0.10 or desf > fav + 1:
+        leitura_cenario = "O cenário personalizado enfraquece a tese acadêmica de compra para o horizonte de dezembro de 2027."
+    else:
+        leitura_cenario = "O cenário personalizado permanece intermediário: as evidências não convergem com força suficiente para uma tese direcional robusta."
+    st.info(leitura_cenario)
+
+    st.session_state["cenario_suz_2027"] = {
+        "usdbrl": usdbrl_cen, "celulose": celulose_cen, "ebitda": ebitda_cen,
+        "us10y": us10y_cen, "multiplo": multiplo_cen, "mercado": mercado_cen,
+        "valor_indicativo": valor_indicativo, "potencial": potencial_indicativo,
+        "favoraveis": fav, "desfavoraveis": desf, "leitura": leitura_cenario,
+    }
+
+# =============================================================================
 # COMPLEMENTO: DIAGNÓSTICO FINAL INTEGRADO — DEZ/2027
 # =============================================================================
 if pagina_principal == "🎯 Decisão Dez/2027":
@@ -1840,12 +1993,89 @@ if pagina_principal == "🎯 Decisão Dez/2027":
         "devem ser usadas para contextualizar ou invalidar uma leitura puramente histórica dos números."
     )
 
-    st.subheader("🌲 Leitura da SUZI")
-    st.info(
-        "O diagnóstico final deve resultar da convergência entre mercado/risco, regressões, fundamentos, valuation "
-        "e eventos/cenários. Divergências entre essas camadas devem permanecer explícitas no relatório, em vez de serem "
-        "forçadas para produzir uma conclusão. A resposta final à questão de compra para revenda em dez/2027 deve ser "
-        "formalizada pelo grupo com base nessa matriz de evidências."
+    st.subheader("🌲 Resposta objetiva do SUZ Quant AI")
+
+    # Evidências quantitativas atuais
+    evid_fav = []
+    evid_desf = []
+    if ret_suz_a > 0:
+        evid_fav.append(f"retorno anualizado histórico positivo ({ret_suz_a:.2%})")
+    else:
+        evid_desf.append(f"retorno anualizado histórico negativo ({ret_suz_a:.2%})")
+    if beta_diag < 1:
+        evid_fav.append(f"beta inferior a 1 ({beta_diag:.3f}), indicando menor sensibilidade sistemática que o NYA na amostra")
+    else:
+        evid_desf.append(f"beta igual ou superior a 1 ({beta_diag:.3f})")
+    if pd.notna(sharpe_diag) and sharpe_diag > 0:
+        evid_fav.append(f"Sharpe positivo ({sharpe_diag:.3f})")
+    elif pd.notna(sharpe_diag):
+        evid_desf.append(f"Sharpe não positivo ({sharpe_diag:.3f})")
+    if melhor_reg.r2_ajustado >= 0.50 and todos_sig:
+        evid_fav.append(f"modelo múltiplo com R² ajustado de {melhor_reg.r2_ajustado:.2%} e X significativos")
+    else:
+        evid_desf.append(f"regressão ainda fraca/inconclusiva para previsão: R² ajustado de {melhor_reg.r2_ajustado:.2%} e todos os X significativos = {'Sim' if todos_sig else 'Não'}")
+
+    # Fundamentos 2025 apurados no trabalho
+    evid_fav.append("Liquidez Corrente 2025 de 3,18 e Endividamento Bancário de Curto Prazo de 6,00%")
+    evid_fav.append("Margem EBITDA 2025 de 43,79% e ROE de 30,57% na base acadêmica do grupo")
+    if 'vm_e_2025' in locals() and vm_e_2025 < vm_e_2023:
+        evid_fav.append(f"VM/EBITDA caiu de {vm_e_2023:.2f}x (2023) para {vm_e_2025:.2f}x (2025)")
+
+    cen = st.session_state.get("cenario_suz_2027")
+    if cen:
+        if cen["potencial"] >= 0.15 and cen["favoraveis"] > cen["desfavoraveis"]:
+            evid_fav.append(f"cenário personalizado indica valor de referência de US$ {cen['valor_indicativo']:.2f} e potencial indicativo de {cen['potencial']:.1%}")
+        elif cen["potencial"] <= -0.10 or cen["desfavoraveis"] > cen["favoraveis"]:
+            evid_desf.append(f"cenário personalizado apresenta potencial indicativo de {cen['potencial']:.1%}")
+
+    # Conclusão acadêmica: explicita a direção das evidências sem transformar o estudo em promessa de retorno.
+    if len(evid_fav) >= len(evid_desf) + 2:
+        conclusao_dir = "FAVORÁVEL, COM CONDICIONANTES"
+        resposta_dir = (
+            "No conjunto de evidências atualmente incorporado ao projeto, a tese acadêmica é favorável à compra do ADR SUZ "
+            "com horizonte de revenda em dezembro de 2027, mas com condicionantes. O suporte vem principalmente dos fundamentos, "
+            "do valuation relativo e do perfil de risco observado; a regressão, por outro lado, não oferece poder preditivo suficiente "
+            "para sustentar essa conclusão isoladamente."
+        )
+    elif len(evid_desf) > len(evid_fav):
+        conclusao_dir = "DESFAVORÁVEL NAS PREMISSAS ATUAIS"
+        resposta_dir = (
+            "No conjunto de evidências atualmente incorporado ao projeto, as premissas não sustentam uma tese acadêmica favorável "
+            "à compra do ADR SUZ para revenda em dezembro de 2027. A conclusão pode mudar se os fatores de cenário e os fundamentos evoluírem."
+        )
+    else:
+        conclusao_dir = "INCONCLUSIVA / CONDICIONAL"
+        resposta_dir = (
+            "As evidências atuais permanecem divididas e não sustentam uma direção acadêmica robusta para dezembro de 2027. "
+            "O simulador deve ser usado para explicitar quais premissas fariam a tese se tornar favorável ou desfavorável."
+        )
+
+    st.success(f"**Diagnóstico: {conclusao_dir}**\n\n{resposta_dir}")
+
+    c_f, c_d = st.columns(2)
+    with c_f:
+        st.markdown("#### ✅ Evidências favoráveis")
+        for item in evid_fav:
+            st.markdown(f"- {item}")
+    with c_d:
+        st.markdown("#### ⚠️ Evidências contrárias / limitações")
+        if evid_desf:
+            for item in evid_desf:
+                st.markdown(f"- {item}")
+        else:
+            st.markdown("- Nenhuma evidência contrária adicional foi classificada pelas regras atuais.")
+
+    if cen:
+        st.markdown("#### 🔮 Cenário selecionado pelo grupo")
+        st.write(
+            f"USD/BRL **{cen['usdbrl']:.2f}** • Celulose **{cen['celulose']:+d}%** • EBITDA **{cen['ebitda']:+d}%** • "
+            f"US10Y **{cen['us10y']:.2f}%** • VM/EBITDA **{cen['multiplo']:.2f}x** • Mercado **{cen['mercado']}**."
+        )
+    else:
+        st.info("Para incorporar premissas futuras à resposta, abra **🔮 Simulador de Cenários**, monte o cenário do grupo e volte a esta página.")
+
+    st.caption(
+        "Conclusão acadêmica produzida por regras transparentes sobre as evidências do projeto. Não representa garantia de preço futuro nem recomendação individual de investimento."
     )
 
     st.markdown("---")
